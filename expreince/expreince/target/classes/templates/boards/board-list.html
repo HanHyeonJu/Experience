@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/fragments/head :: head-D&B"></head>
+<script th:if="${message}">
+    let m = '[[${message}]]';
+    alert(m);
+</script>
+<body>
+    <nav th:replace="/fragments/nav :: 네브바"></nav>
+
+    <nav class="navbar navbar-light mt-5">
+      <div class="container-fluid">
+          <div class="d-flex">
+            <!-- 검색타입 -->
+            <div class="input-group input-group-static me-3" style="width: 20em">
+              <select class="form-control" id="searchType">
+                <!-- <option value="" th:selected="${pmk.cri.type} == ''"></option> -->
+                <option value="T" th:selected="${pmk.cri.type} == 'T'">제목</option>
+                <option value="C" th:selected="${pmk.cri.type} == 'C'">내용</option>
+                <option value="W" th:selected="${pmk.cri.type} == 'W'">작성자</option>
+                <option value="TC" th:selected="${pmk.cri.type} == 'TC'">제목 + 내용</option>
+                <option value="TW" th:selected="${pmk.cri.type} == 'TW'">제목 + 작성자</option>
+                <option value="TCW" th:selected="${pmk.cri.type} == 'TCW'">제목 + 내용 + 작성자</option>
+              </select>
+            </div>
+            <!-- 검색창 -->
+            <input class="form-control ml-2" type="text" id="searchKeyword" th:value="${pmk.cri.keyword}" placeholder="검색">
+            <button class="btn btn-outline-success ml-2" id="searchButton">Search</button>
+          </div>
+    </nav>
+   <div class="boardList ml-4 mr-4">
+    <table class="table" id="boardList">
+        <tr>
+          <th class="text-center">글번호</th>
+          <th class="text-center">글제목</th>
+          <th class="text-center">작성자</th>
+          <th class="text-center">등록일</th>
+          <th class="text-center">수정일</th>
+          <th class="text-center">조회수</th>
+        </tr>
+        <tr th:each="board : ${boardList}">
+          <td class="text-center" th:text="${board.bno}"></td>
+          <td class="text-center">
+            <a class="title" th:href="@{/boards/board(bno=${board.bno})}  + '&pageNum=__${pmk.cri.pageNum}__'">
+            <span th:text="${board.title}"></span>
+            </a>
+          </td>
+          <td class="text-center" th:text="${board.writer}"></td>
+          <td class="text-center">
+              <span th:text="${#temporals.format(board.regDate, 'yyyy-MM-dd a hh:mm:ss')}"></span>
+          </td>
+          <td class="text-center">
+            <span th:text="${#temporals.format(board.updateDate, 'yyyy-MM-dd a hh:mm:ss')}"></span>
+          </td>
+          <td class="text-center" th:text="${board.view}"></td>
+      </tr>
+      </table>
+      
+      <div class="enroll" th:if="${principal != null}">
+        <a th:href="@{/boards/enroll}" class="btn btn-secondary mt-3" style="color:white; float:right;">게시글 작성</a>
+      </div>
+    </div>
+      <!-- pmk.endPage > 0 => 표시할 페이지가 있다 -->
+      <nav aria-label="Page navigation" th:if="${pmk.endPage > 0}">
+        <ul class="pagination pagination-primary justify-content-center mt-5">
+          <li class="page-item" th:if="${pmk.prev}">
+            <a class="page-link" th:href="@{/boards} + '?pageNum=__${pmk.startPage-1}__'" aria-label="이전">
+              <span class="material-icons"> ◀ </span>
+              <span class="sr-only">이전화살표</span>
+            </a>
+          </li>
+          <!-- 시퀀스로 1부터 endPage까지 순차적으로 반복문 출력 -->
+          <li class="page-item" th:classappend="${pmk.cri.pageNum == number} ? 'active': '' " th:each="number : ${#numbers.sequence(pmk.startPage, pmk.endPage)}">
+            <a class="page-link" th:href="@{/boards} + '?pageNum=__${number}__'" th:text="${number}"></a>
+          </li>
+
+          <li class="page-item" th:if="${pmk.next}">
+            <a class="page-link" th:href="@{/boards} + '?pageNum=__${pmk.endPage+1}__'" aria-label="다음">
+              <span class="material-icons"> ▶ </span>
+              <span class="sr-only">다음화살표</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    
+      <script>
+        var this_title = "Share";
+        document.title = this_title;
+
+        const searchKeyword = document.getElementById('searchKeyword');
+        const searchButton = document.getElementById('searchButton');
+        const searchType = document.getElementById('searchType');
+        
+        searchButton.addEventListener('click',function(){
+          let keyword = '';
+          let type = '';
+          if (searchKeyword.value.trim()){
+            keyword = '&keyword=' + searchKeyword.value;
+            type = '&type=' + searchType.value;
+          } 
+          location.href = '/boards?pageNum=1' + keyword + type;
+        })
+
+        const getLinks = document.querySelectorAll('table.title');
+        getLinks.forEach((link) => {
+          link.addEventListener('click', function(e){
+            e.preventDefault();
+            let keyword = '';
+            let type = '';
+            if(searchKeyword.value.trim()){
+              keyword = '&keyword=' + searchKeyword.value;
+              type = '&type=' + searchType.value;
+            }
+            location.href = this.getAttribute('href') + keyword + type;
+          })
+        })
+
+        const pageLinks = document.querySelectorAll('ul.pagination .page-link');
+        pageLinks.forEach((link) => {
+          link.addEventListener('click', function(e){
+            e.preventDefault();
+            let keyword = '';
+            let type = '';
+            if(searchKeyword.value.trim()){
+              keyword = '&keyword=' + searchKeyword.value;
+              type = '&type=' + searchType.value;
+            }
+            location.href = this.getAttribute('href') + keyword + type;
+          })
+        })
+    </script>
+</body>
+</html>

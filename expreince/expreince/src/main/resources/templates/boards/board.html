@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/fragments/head :: head-D&B"></head>
+<script th:if="${message}">
+    let m = '[[${message}]]';
+    alert(m);
+</script>
+<body>
+    <nav th:replace="/fragments/nav :: 네브바"></nav>
+
+    <div class="card card-plain">
+        <div class="card-body bg-white">
+          <table class="table table-condensed">
+            <tr>
+              <th>번호</th>
+              <td th:text="${board.bno}"></td>
+              <th>작성일</th>
+              <td th:text="${#temporals.format(board.regDate, 'yyyy-MM-dd a hh:mm:ss')}"></td>
+            </tr>
+            <tr>
+              <th>작성자</th>
+              <td th:text="${board.writer}"></td>
+              <th>수정일</th>
+              <td th:text="${#temporals.format(board.updateDate, 'yyyy-MM-dd a hh:mm:ss')}"></td>
+            </tr>
+            <tr>
+              <th>제목</th>
+              <td colspan="3" th:text="${board.title}"></td>
+            </tr>
+            <tr>
+              <th>내용</th>
+              <td colspan="3" th:utext="${board.content}"></td>
+            </tr>
+          </table>
+        </div>
+        <div class="card-footer bg-white text-right pt-0 px-lg-2 px-1">
+          <div class="logincheck" th:if="${principal != board.writer}">
+            <a th:href="@{/boards} + '?pageNum=__${cri.pageNum}__'" class="btn btn-primary page mt-2">목록</a>
+          </div>
+          
+        <div class="logincheck mt-2" th:if="${principal == board.writer}">
+          <a th:href="@{/boards} + '?pageNum=__${cri.pageNum}__'" class="btn btn-primary page">목록</a>
+          <a th:href="@{/boards/modify(bno=${board.bno})} + '&pageNum=__${cri.pageNum}__'" class="btn btn-success page">수정하기</a>
+          <a th:href="@{/boards/delete(bno=${board.bno})}" class="btn btn-danger page deleteConfirm">삭제하기</a>
+        </div>
+        </div>
+        </div>
+
+         <!-- 댓글달기 -->
+         <div class="row mt-2">
+          <div class="col me-auto ms-auto">
+            <div class="card card-body">
+                <div class="row">
+                  <div class="col">
+                      <div class="logincheck" th:if="${principal != null}">
+                        <span class="writer" id="writer" th:text="${principal}" style="color:darkgreen; font-weight: bold;"></span>
+                        <div class="input-group input-group-dynamic mt-2">
+                          <textarea
+                            id="content"
+                            class="form-control"
+                            rows="4"
+                            placeholder="댓글 내용을 적어주세요."
+                            required
+                          ></textarea>
+                          <div class="reply">
+                            <button id="reply-btn" class="btn btn-primary w-90 ml-2">댓글달기</button>
+                            <br>
+                            <a th:href="@{/boards/board(bno=${board.bno})}" class="btn btn-danger ml-2 mt-2" style="width: 90px;">취소</a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </div>
+
+        <!-- 댓글 리스트 -->
+          <div class="row mt-2">
+            <div class="col me-auto ms-auto">
+              <div class="card card-plain">
+                <ul class="list-group" id="reply-list">
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        <!-- 로그인 하지 않았을 때도 댓글 리스트는 보이게 함  -->
+          <div class="notlogin" th:if="${principal == null}">
+            <div th:each="reply : ${replyList}">
+              <div class="row mt-2">
+                <div class="col me-auto ms-auto">
+                  <div class="card card-plain">
+                    <ul class="list-group" id="reply-list">
+                      <li class="list-group-item" style="position: relative">
+                        <div th:text="${reply.writer}"></div>
+                        <div th:text="${reply.update_at}"></div>
+                        <p class="mb-0" th:text="${reply.content}"></p>
+                        <textarea class="w-100" style="display:none" th:text="${reply.content}"></textarea>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+      </div>
+
+    <script th:src="@{/js/Fetch-API.js}"></script>
+    <script th:src="@{/js/delete.js}"></script>
+
+    <script>
+      var this_title = "Share";
+      document.title = this_title;
+
+      const links = document.querySelectorAll('a.page');
+      links.forEach(function (link) {
+        // 각각의 a태그를 클릭했을때 => 함수실행
+        link.addEventListener('click', function (e) {
+          e.preventDefault(); //a태그의 이동 요청이 취소됨
+          let keyword = '[[${cri.keyword}]]';
+          let type = '[[${cri.type}]]'
+          if(keyword.trim()){
+            keyword = '&keyword=' + keyword;
+            type = '&type=' + searchType.value;
+          }
+          location.href = this.getAttribute('href') + keyword + type; // 클릭한 a태그의 주소에 + 키워드로 요청함
+        })
+      })
+
+      // 댓글기능, fetch-api 사용
+      const http = new EasyHTTP();
+
+      // 댓글달기 버튼을 눌렀을 때
+      const replyButton = document.getElementById('reply-btn');
+      replyButton.addEventListener('click', function(){
+        console.log('클릭');
+        const data = {
+          bno: '[[${board.bno}]]',
+          writer: '[[${principal}]]',
+          content: document.getElementById('content').value
+        };
+        console.log(data);
+
+        // post로 data보내기
+        http
+          .post('/reply', data)
+          .then((res) => console.log(res))
+          .catch((err) => console.log(err));
+
+        location.reload();
+      })
+
+        // el = this
+      function updateReply(el){
+        //console.log(el);
+        // .parentElement는 el의 윗범위(div)를 선택해줌(?) => console로 확인
+        // .previousElementSibling 바로 전 태그 범위(위) .nextElementSibling 바로 다음 태그 범위(아래)
+        const 댓글내용 = el.parentElement.previousElementSibling.previousElementSibling;
+        const 댓글수정 = el.parentElement.previousElementSibling; // 수정할 수 있는 textarea창
+        const 삭제버튼 = el.nextElementSibling;
+        const 댓글시간 = el.parentElement.previousElementSibling.previousElementSibling.previousElementSibling;
+        if(el.textContent == '수정'){ // 버튼 이름이 수정이면
+          댓글내용.style.display = 'none'; // style태그가 없어짐
+          댓글수정.style.display = 'block'; // textarea가 보여짐
+          삭제버튼.style.visibility = 'hidden'; // 완전히 삭제하지 않고 모습만 숨김
+          el.textContent = '수정완료'; // 수정버튼이 수정완료버튼으로 변경됨
+          // 수정완료버튼으로 바뀌는 것 까지
+        } else { 
+          // 수정완료버튼을 누른 이후
+          // 수정이 되었기 때문에 서버로 update 요청
+          const data = {
+            // data-id => dataset.id
+            reply_no: el.dataset.id,
+            content: 댓글수정.value
+          };
+
+          http .put('/reply', data)
+               .then((res) => { 댓글내용.textContent = res.content;
+                                댓글시간.textContent = res.update_at;
+                              })
+               .catch((err) => console.log(err));
+          
+          // 수정된 댓글내용 보이게, 삭제, 수정버튼 다시 보이게하기
+          댓글내용.style.display = 'block'; // p태그가 보여짐
+          댓글수정.style.display = 'none'; // textarea가 사라짐
+          삭제버튼.style.visibility = 'visible'; // 삭제버튼 다시 나타남
+          el.textContent = '수정';
+        } // 시간은 수정 안 해줘서 새로고침해야 수정시간 보임
+      }
+
+      // 댓글 삭제하기
+      function deleteReply(el){
+        if(confirm('정말 삭제하겠습니까?')){
+          http
+            .delete('/reply/' + el.dataset.id)
+            .then((res) => console.log(res))
+            .catch((err) => console.log(err));
+          // 태그 객체 삭제
+          el.parentElement.parentElement.parentElement.remove();
+        }
+        location.reload();
+      }
+
+      // 댓글 리스트 가져오기 - reply가 하나 이상 존재하면 html 화면에 list형식으로 나타남(?)
+      function replyListView(items){
+        const replyList = document.getElementById('reply-list');
+
+        let lis = '';
+          
+        items.forEach(function(item){
+          let writer = item.writer;
+          let content = item.content;
+          let update = item.update_at;
+          let id = item.reply_no;
+          
+          let li = `<li class="list-group-item" style="position: relative">
+                      <div>${writer}</div>
+                      <div>${update}</div>
+                      <p class="mb-0">${content}</p>
+                      <textarea class="w-100" style="display:none">${content}</textarea>
+                      <div class="div-button" style="position: absolute; top: 10px; right: 10px;">
+                        <button onclick="updateReply(this)" data-id="${id}" class="badge bg-gradient-info ms-auto">수정</button>
+                        <button onclick="deleteReply(this)" data-id="${id}" class="badge bg-gradient-danger">삭제</button>
+                      </div>
+                    </li>`;
+          let li2 = `<li class="list-group-item" style="position: relative">
+                      <div>${writer}</div>
+                      <div>${update}</div>
+                      <p class="mb-0">${content}</p>
+                      <textarea class="w-100" style="display:none">${content}</textarea>
+                      <div class="div-button" style="position: absolute; top: 10px; right: 10px;">
+                        <button onclick="updateReply(this)" data-id="${id}" class="badge bg-gradient-info ms-auto d-none">수정</button>
+                        <button onclick="deleteReply(this)" data-id="${id}" class="badge bg-gradient-danger d-none">삭제</button>
+                      </div>
+                    </li>`;
+      
+          if(writer == '[[${principal}]]'){
+            lis += li;
+          } else{
+            lis += li2;
+          }
+          
+        })
+
+        // reply-list아이디를 가지고 있는 ul태그 사이에 반복문을 통해 얻은 결과값인 lis가 들어감
+        replyList.innerHTML = lis; 
+      }
+ 
+       // 댓글보기 버튼 클릭할 필요없이 바로 댓글리스트 출력
+       // html이 준비되면 실행하는 이벤트
+       document.addEventListener('DOMContentLoaded', function(){
+        
+        http.get('/reply/'+'[[${board.bno}]]')
+              .then((res) => replyListView(res))
+              .catch((err) => console.log(err));
+       })
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+		  	  
+<mapper namespace="com.project.experience.dao.ReplyMapper">
+	
+	<!-- 댓글 등록 -->
+	<insert id="enroll" >
+		
+		insert into reply(bno, content, writer) values (#{bno}, #{content}, #{writer})
+		
+	</insert>
+	
+	<!-- 댓글 목록 -->
+	<select id="replyList" resultType="Reply">
+	
+		select * from reply where bno = #{bno} order by reply_no desc
+		
+	</select>
+	
+	<!-- 댓글 하나만 가져오기  -->
+	<select id="reply" resultType="Reply">
+	
+		select * from reply where reply_no = #{reply_no}
+		
+	</select>
+	
+	<!-- 댓글 수정 -->
+	<update id="modify">
+	
+		update reply set content = #{content}, update_at = now()
+		where reply_no = #{reply_no}
+		
+	</update>
+	
+	<!-- 댓글 삭제 -->
+	<delete id="delete">
+	
+		delete from reply where reply_no = #{reply_no}
+		
+	</delete>
+	
+</mapper>

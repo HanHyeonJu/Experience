@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="/fragments/head :: head-todo"> </head>
+
+  <body>
+    <nav th:replace="/fragments/nav :: 네브바"></nav>
+
+    <main role="main" class="container">
+      <div class="display-2">new TODO</div>
+      <a th:href="@{/todos}" class="btn btn-primary my-3">돌아가기</a>
+
+      <form method="post" th:object="${page}" th:action="@{/todos/new}">
+        <div th:if="${#fields.hasErrors('*')}" class="alert alert-danger">에러 발생</div>
+        <div th:if="${message}" th:class="${'alert ' + alertClass}" th:text="${message}"></div>
+
+        <div class="form-group">
+          <label for="">TODO</label>
+          <input type="text" class="form-control" th:field="*{title}" placeholder="이름" />
+          <span class="error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="">진행상황</label>
+          <select th:field="*{stage}" class="form-control">
+            <option th:value="시작전">시작전</option>
+            <option th:value="진행중">진행중</option>
+            <option th:value="완료">완료</option>
+          </select>
+          <span class="error" th:if="${#fields.hasErrors('stage')}" th:errors="*{stage}"></span>
+        </div>
+        
+        <div class="form-group">
+            <input type="datetime" th:field="*{startDate}">
+        </div>
+
+        
+
+        <div class="form-group">
+          <label for="">세부내용</label>
+          <input type="text" class="form-control" th:field="*{description}" />
+          <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+        </div>
+
+
+
+        <button type="submit" class="btn btn-danger">추가</button>
+      </form>
+    </main>
+
+    <footer th:replace="/fragments/footer :: footer"></footer>
+  </body>
+</html>

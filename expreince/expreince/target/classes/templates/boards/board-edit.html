@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="/fragments/head :: head-D&B"></head>
+<body>
+    <nav th:replace="/fragments/nav :: 네브바"></nav>
+
+    <div class="container mt-5">
+        <h3>게시글 수정하기</h3>
+        <div class="row">
+            <div class="col">
+
+                <form th:action="@{/boards/modify}" th:object="${board}" method="post">
+                    <input type="hidden" th:field="*{bno}">
+                        <div class="form-group mt-2">
+                        <input type="text" class="form-control" th:field="*{title}" placeholder="제목을 입력해주세요"/>
+                        <span class="error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}"></span>
+                        </div>
+    
+                        <div class="form-group mt-2">
+                        <textarea name="content" id="editor" th:field="*{content}" placeholder="내용을 입력해주세요"></textarea>
+                        <span class="error" th:if="${#fields.hasErrors('content')}" th:errors="*{content}"></span>
+                        </div>
+
+                        <div class="form-group" style="float:right">
+                        <button type="submit" class="btn btn-success">수정하기</button>
+                        <a th:href="@{/boards}+ '?pageNum=__${cri.pageNum}__'" class="btn btn-dark my-3 page">돌아가기</a>
+                        </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ck에디터 스크립트 -->
+    <script>
+        ClassicEditor
+            .create(document.querySelector('#editor'))
+            .catch(error => {
+            console.error(error)
+            });
+    </script>
+
+    <script>
+        var this_title = "Share";
+        document.title = this_title;
+
+        const links = document.querySelector('a.page');
+        links.forEach(function(link){
+          link.addEventListener('click', function(e){
+            e.preventDefault(); //a태그의 이동 요청이 취소됨
+            let keyword = '[[${cri.keyword}]]';
+            let type = '[[${cri.type}]]'
+            if(keyword.trim()){
+              keyword = '&keyword=' + keyword;
+              type = '&type=' + searchType.value;
+            }
+            location.href = this.getAttribute('href') + keyword + type;
+          })
+        })
+    </script>
+</body>
+</html>
